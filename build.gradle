@@ -1,0 +1,162 @@
+plugins {
+	id 'fabric-loom' version '1.0-SNAPSHOT'
+	id 'maven-publish'
+	id "com.github.johnrengelman.shadow" version "7.1.2"
+	id "de.undercouch.download" version "4.1.2"
+}
+
+sourceCompatibility = JavaVersion.VERSION_16
+targetCompatibility = JavaVersion.VERSION_16
+
+version = project.mod_version
+group = project.maven_group
+
+def minecraft_version = project.target_mc_version
+def is_1_17 = (minecraft_version as String).startsWith("1.17")
+def is_1_18 = (minecraft_version as String).startsWith("1.18")
+def yarn_mappings = is_1_17 ? project.yarn_mappings_117 : is_1_18 ? project.yarn_mappings_118 : project.yarn_mappings_119
+def loader_version = is_1_17 ? project.loader_version_117 : is_1_18 ? project.loader_version_118 : project.loader_version_119
+def fapi_version = is_1_17 ? project.fabric_version_117 : is_1_18 ? project.fabric_version_118 : project.fabric_version_119
+
+repositories {
+	// Add repositories to retrieve artifacts from in here.
+	// You should only use this when depending on other mods because
+	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
+	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
+	// for more information about repositories.
+}
+
+configurations {
+	shadow
+}
+
+if(!project.file("lib/mtr-fabric.jar").exists()) {
+	download {
+		src "https://www.minecrafttransitrailway.com/libs/${project.mtr_version}/MTR-fabric-${minecraft_version}-${project.mtr_version}.jar"
+		dest "lib/mtr-fabric.jar"
+		overwrite true
+	}
+}
+
+task setupLibrary() {
+	doLast {
+		delete("lib/mtr-fabric.jar")
+		download {
+			src "https://www.minecrafttransitrailway.com/libs/${project.mtr_version}/MTR-fabric-${minecraft_version}-${project.mtr_version}.jar"
+			dest "lib/mtr-fabric.jar"
+			overwrite true
+		}
+	}
+}
+
+dependencies {
+	// To change the versions see the gradle.properties file
+	minecraft "com.mojang:minecraft:${minecraft_version}"
+	mappings "net.fabricmc:yarn:${yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${loader_version}"
+
+	// Fabric API. This is technically optional, but you probably want it anyway.
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${fapi_version}"
+	modImplementation files("lib/mtr-fabric.jar")
+	implementation "org.eclipse.jetty:jetty-http:${rootProject.jetty_version}"
+	implementation "org.eclipse.jetty:jetty-io:${rootProject.jetty_version}"
+	implementation "org.eclipse.jetty:jetty-security:${rootProject.jetty_version}"
+	implementation "org.eclipse.jetty:jetty-server:${rootProject.jetty_version}"
+	implementation "org.eclipse.jetty:jetty-servlet:${rootProject.jetty_version}"
+	implementation "org.eclipse.jetty:jetty-util:${rootProject.jetty_version}"
+	implementation "org.eclipse.jetty:jetty-util-ajax:${rootProject.jetty_version}"
+	implementation "javax.servlet:javax.servlet-api:${rootProject.servlet_api_version}"
+	shadow "org.eclipse.jetty:jetty-http:${rootProject.jetty_version}"
+	shadow "org.eclipse.jetty:jetty-io:${rootProject.jetty_version}"
+	shadow "org.eclipse.jetty:jetty-security:${rootProject.jetty_version}"
+	shadow "org.eclipse.jetty:jetty-server:${rootProject.jetty_version}"
+	shadow "org.eclipse.jetty:jetty-servlet:${rootProject.jetty_version}"
+	shadow "org.eclipse.jetty:jetty-util:${rootProject.jetty_version}"
+	shadow "org.eclipse.jetty:jetty-util-ajax:${rootProject.jetty_version}"
+	shadow "javax.servlet:javax.servlet-api:${rootProject.servlet_api_version}"
+
+	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
+	// You may need to force-disable transitiveness on them.
+}
+
+shadowJar {
+	configurations = [project.configurations.shadow]
+	classifier "dev-shadow"
+	relocate "javax.servlet", "mtr.libraries.javax.servlet"
+	relocate "org.eclipse", "mtr.libraries.org.eclipse"
+}
+
+remapJar {
+	input.set shadowJar.archiveFile
+	dependsOn shadowJar
+	classifier null
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	// ensure that the encoding is set to UTF-8, no matter what the system default is
+	// this fixes some edge cases with special characters not displaying correctly
+	// see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
+	// If Javadoc is generated, this must be specified in that task too.
+	it.options.encoding = "UTF-8"
+
+	// Minecraft 1.17 (21w19a) upwards uses Java 16.
+	def targetVersion = 16
+	if (JavaVersion.current().isJava9Compatible()) {
+		 it.options.release = targetVersion
+	}
+}
+
+java {
+	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+	// if it is present.
+	// If you remove this line, sources will not be generated.
+	withSourcesJar()
+}
+
+jar {
+	from("LICENSE") {
+		rename { "${it}_${project.archivesBaseName}"}
+	}
+}
+
+// configure the maven publication
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			// add all the jars that should be included when publishing to maven
+			artifact(remapJar) {
+				builtBy remapJar
+			}
+			artifact(sourcesJar) {
+				builtBy remapSourcesJar
+			}
+		}
+	}
+
+	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+		allprojects {
+			repositories {
+				maven {
+					url = "https://minecraft.guntram.de/maven/"
+				}
+				maven { url 'https://www.jitpack.io' }
+				maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+			}
+
+			afterEvaluate {
+				for (def task in it.tasks) {
+					if (!project.file("lib/mtr-fabric.jar").exists()) {
+						task.dependsOn rootProject.tasks.setupLibrary
+					}
+				}
+			}
+		}
+}

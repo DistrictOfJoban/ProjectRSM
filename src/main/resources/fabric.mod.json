@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "mtrrsm",
+  "version": "${version}",
+
+  "name": "MTR Real-Time System Map",
+  "description": "N/A",
+  "authors": [
+    "LX86"
+  ],
+  "contact": {
+    "homepage": "",
+    "sources": ""
+  },
+
+  "license": "CC0-1.0",
+  "icon": "assets/joban/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.lx.rsm.ProjectRSM"
+    ]
+  },
+  "mixins": [
+    "mtrrsm.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.9",
+    "fabric": "*",
+    "minecraft": ">=1.17",
+    "mtr": "*"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}

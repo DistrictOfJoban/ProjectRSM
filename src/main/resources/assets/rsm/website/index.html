@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Real-time System Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+   <!-- <script src="https://cdn.jsdelivr.net/npm/leaflet-curve@1.0.0/leaflet.curve.js"></script> -->
+<!--    <script src="https://bbecquet.github.io/Leaflet.RotatedMarker/leaflet.rotatedMarker.js"></script>-->
+    <link rel="stylesheet" href="https://cdn.sammdot.ca/fonts/BerkeleyMono.css"/>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      #map {
+        width: 100%;
+        height: 100%;
+        background-color: #888;
+      }
+
+      .tracks {
+        display: inline-block;
+        width: 1.4em;
+        text-align: center;
+        border-radius: 0.7em;
+        background-color: #444;
+        color: white;
+      }
+
+      .train-name,
+      .station-name {
+        font-family: "Arial" !important;
+        font-weight: bold;
+        font-size: 15px;
+      }
+      .station-name .track-number,
+      .train-name .car-number {
+        display: inline-block;
+        width: 1.4em;
+        text-align: center;
+        border-radius: 0.7em;
+        background-color: #444;
+        color: white;
+      }
+
+      .header {
+        font-size: 1.4em;
+        font-weight: 600;
+        color: black;
+      }
+
+      .tooltip {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        font-size: 1.15em;
+      }
+
+      .tooltip-wrapper {
+        border: 3px solid var(--bcolor);
+        border-radius: 3px;
+        padding: 0.25em;
+      }
+
+      .stn-label {
+        background: none !important;
+        color: white;
+        border: none;
+        box-shadow: none;
+        font-size: 1.5em;
+        text-shadow: 2px 2px black;
+      }
+
+      .train-tag {
+        font-size: 0.75em;
+        background: #FFBB00;
+        padding: 0.25em 5px;
+        border-radius: 1em;
+      }
+
+      .rtvia {
+        position: relative;
+        display: inline-block;
+        margin-left: 6px;
+      }
+
+      .rtvia::before {
+        position: absolute;
+        left: -6px;
+        top: 0;
+        width: 4px;
+        height: 100%;
+        content: "";
+        background-color: var(--rt-color);
+      }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script type="module" src="./assets/main.js"></script>
+</body>
+</html>
