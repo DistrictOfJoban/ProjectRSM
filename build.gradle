@@ -1,5 +1,6 @@
+import groovy.json.JsonSlurper
 plugins {
-	id 'fabric-loom' version '1.0-SNAPSHOT'
+	id 'fabric-loom' version '1.1-SNAPSHOT'
 	id 'maven-publish'
 	id "com.github.johnrengelman.shadow" version "7.1.2"
 	id "de.undercouch.download" version "4.1.2"
@@ -8,16 +9,20 @@ plugins {
 sourceCompatibility = JavaVersion.VERSION_16
 targetCompatibility = JavaVersion.VERSION_16
 
-version = project.mod_version
 group = project.maven_group
 
-def minecraft_version = project.target_mc_version
-def is_1_17 = (minecraft_version as String).startsWith("1.17")
-def is_1_18 = (minecraft_version as String).startsWith("1.18")
-def yarn_mappings = is_1_17 ? project.yarn_mappings_117 : is_1_18 ? project.yarn_mappings_118 : project.yarn_mappings_119
-def loader_version = is_1_17 ? project.loader_version_117 : is_1_18 ? project.loader_version_118 : project.loader_version_119
-def fapi_version = is_1_17 ? project.fabric_version_117 : is_1_18 ? project.fabric_version_118 : project.fabric_version_119
+def default_minecraft_version = "1.17.1"
+def minecraft_version = project.properties.containsKey("buildVersion") ? project.getProperties().get("buildVersion") : default_minecraft_version
+def minecraft_major_version = minecraft_version.split("\\.")[0] as int // Always return 1, unless mojang goes haywire :P
+def minecraft_main_version = minecraft_version.split("\\.")[1] as int
+def mc_requirement = "${minecraft_major_version}.${minecraft_main_version}.x"
+def minecraft_minor_version = minecraft_version.split("\\.").size() > 2 ? minecraft_version.split("\\.")[2] as int : 0
 
+def yarn_mappings = new JsonSlurper().parse(("https://meta.fabricmc.net/v2/versions/yarn/" + minecraft_version).toURL())[0]["version"]
+def loader_version = project.loader_version
+def fapi_version = getModrinthVersion("fabric", minecraft_version, "fabric-api")
+
+version = minecraft_version + "-" + project.mod_version
 repositories {
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
@@ -44,6 +49,33 @@ task setupLibrary() {
 		download {
 			src "https://www.minecrafttransitrailway.com/libs/${project.mtr_version}/MTR-fabric-${minecraft_version}-${project.mtr_version}.jar"
 			dest "lib/mtr-fabric.jar"
+			overwrite true
+		}
+	}
+}
+
+task downloadOptimizedMod() {
+	doLast {
+		def outputPath = "run/mods/"
+
+		download {
+			src getModrinthDLURL("fabric", minecraft_version, "lazydfu")
+			dest outputPath + "dfu.jar"
+			overwrite true
+		}
+		download {
+			src getModrinthDLURL("fabric", minecraft_version, "ferrite-core")
+			dest outputPath + "ferrite-core.jar"
+			overwrite true
+		}
+		download {
+			src getModrinthDLURL("fabric", minecraft_version, "smoothboot-fabric")
+			dest outputPath + "smooth-boot.jar"
+			overwrite true
+		}
+		download {
+			src getModrinthDLURL("fabric", minecraft_version, "ksyxis")
+			dest outputPath + "ksyxis.jar"
 			overwrite true
 		}
 	}
@@ -96,7 +128,10 @@ processResources {
 	inputs.property "version", project.version
 
 	filesMatching("fabric.mod.json") {
-		expand "version": project.version
+		expand (
+				"version": project.version,
+				"mc_version": mc_requirement
+		)
 	}
 }
 
@@ -159,4 +194,24 @@ publishing {
 				}
 			}
 		}
+}
+
+static def getModrinthVersion(loader, minecraftVersion, projectId) {
+	def versionsArray = new JsonSlurper().parse(("https://api.modrinth.com/v2/project/" + projectId + "/version").toURL())
+	for (def versionElement : versionsArray) {
+		if (versionElement["loaders"].contains(loader) && versionElement["game_versions"].contains(minecraftVersion)) {
+			return versionElement["version_number"]
+		}
+	}
+	return ""
+}
+
+static def getModrinthDLURL(loader, minecraftVersion, projectId) {
+	def versionsArray = new JsonSlurper().parse(("https://api.modrinth.com/v2/project/" + projectId + "/version").toURL())
+	for (def versionElement : versionsArray) {
+		if (versionElement["loaders"].contains(loader) && versionElement["game_versions"].contains(minecraftVersion)) {
+			return versionElement["files"][0]["url"].toURL()
+		}
+	}
+	return ""
 }
