@@ -30,13 +30,14 @@ public class StationDepotServlet extends BaseServlet {
                 stnObject.add("corner2", getCornerObject(stn.corner2));
                 stationList.add(stnObject);
             }
-            for(Depot stn : Events.overworldData.depots) {
+            for(Depot depot : Events.overworldData.depots) {
+                if(depot.corner1 == null || depot.corner2 == null) continue;
                 JsonObject stnObject = new JsonObject();
-                stnObject.addProperty("color", stn.color);
-                stnObject.addProperty("name", IGui.formatStationName(stn.name));
+                stnObject.addProperty("color", depot.color);
+                stnObject.addProperty("name", IGui.formatStationName(depot.name));
 
-                stnObject.add("corner1", getCornerObject(stn.corner1));
-                stnObject.add("corner2", getCornerObject(stn.corner2));
+                stnObject.add("corner1", getCornerObject(depot.corner1));
+                stnObject.add("corner2", getCornerObject(depot.corner2));
                 depotList.add(stnObject);
             }
             object.add("station", stationList);
