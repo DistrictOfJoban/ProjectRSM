@@ -4,8 +4,6 @@
     <title>Real-time System Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-   <!-- <script src="https://cdn.jsdelivr.net/npm/leaflet-curve@1.0.0/leaflet.curve.js"></script> -->
-<!--    <script src="https://bbecquet.github.io/Leaflet.RotatedMarker/leaflet.rotatedMarker.js"></script>-->
     <link rel="stylesheet" href="https://cdn.sammdot.ca/fonts/BerkeleyMono.css"/>
     <style>
       html,
@@ -97,10 +95,29 @@
         content: "";
         background-color: var(--rt-color);
       }
+
+      #ctrl-panel {
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin: 10px;
+        padding: 5px;
+        border-radius: 4px;
+        background: white;
+        z-index: 500;
+      }
     </style>
 </head>
 <body>
+    <div id="ctrl-panel">
+      <input type="checkbox" id="stn-visible" checked>
+      <label for="stn-visible">Station</label><br>
+      <input type="checkbox" id="depot-visible">
+      <label for="depot-visible">Depot</label><br><br>
+      <span id="leaflet-pos">0000, -000</span>
+    </div>
     <div id="map"></div>
+    
     <script type="module" src="./assets/main.js"></script>
 </body>
 </html>

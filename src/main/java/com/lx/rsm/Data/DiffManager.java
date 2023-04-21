@@ -1,12 +1,13 @@
 package com.lx.rsm.Data;
 
-import java.util.HashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 public class DiffManager {
-    private final HashMap<String, String> previousDatas;
+    private final Object2ObjectMap<String, String> previousDatas;
 
     public DiffManager() {
-        previousDatas = new HashMap<>();
+        previousDatas = new Object2ObjectArrayMap<>();
     }
 
     public boolean needUpdate(String uuid, String data) {

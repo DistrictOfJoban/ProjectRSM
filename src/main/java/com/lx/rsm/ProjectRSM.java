@@ -16,11 +16,12 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 //import org.eclipse.jetty.util.log.Log;
 //import org.eclipse.jetty.util.log.StdErrLog;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.StdErrLog;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 import java.net.URL;
-import java.util.*;
 
 public class ProjectRSM implements ModInitializer {
     private Server webServer = null;
@@ -69,7 +70,7 @@ public class ProjectRSM implements ModInitializer {
         servletHolder.setInitParameter("dirAllowed", "true");
         context.addServlet(servletHolder, "/");
         context.addServlet(DataServlet.class, "/data");
-        context.addServlet(StationServlet.class, "/stations");
+        context.addServlet(StationDepotServlet.class, "/areas");
         context.addServlet(TrainServlet.class, "/trains");
         context.addServlet(OccupiedServlet.class, "/occupy");
         context.addServlet(InfoServlet.class, "/info");

@@ -28,7 +28,7 @@ map.getPane("trains").style.zIndex = 750;
 
 map.getPane("tooltipPane").style.zIndex = 1000;
 
-let stationLayer = L.layerGroup([], { pane: "stations" }).addTo(map);
+let areaLayer = L.layerGroup([], { pane: "stations" }).addTo(map);
 let tracksLayer = L.layerGroup([], { pane: "tracks" }).addTo(map);
 let tracksLayerSecondary = L.layerGroup([], { pane: "tracks-secondary" }).addTo(map);
 let occupyLayer = L.layerGroup([], { pane: "occupy" }).addTo(map);
@@ -38,9 +38,19 @@ let trackUpdated = false;
 
 const knownTrains = new Map();
 const knownOccupants = new Map();
+let areaData = null;
 let trainsStream = null;
 let occupyStream = null;
 let trackStream = null;
+
+function updateAreaVisibility() {
+    SETTINGS.STATION_VISIBLE = document.getElementById("stn-visible").checked;
+    SETTINGS.DEPOT_VISIBLE = document.getElementById("depot-visible").checked;
+    drawAreas();
+}
+
+document.getElementById("stn-visible").onchange = updateAreaVisibility;
+document.getElementById("depot-visible").onchange = updateAreaVisibility;
 
 function updateTracks() {
     if(trackStream) trackStream.close();
@@ -178,27 +188,50 @@ function renderTrains() {
     }
 }
 
-async function updateStation() {
-    let resp = await fetch(SETTINGS.BASE_URL + "stations");
+async function getAreas() {
+    let resp = await fetch(SETTINGS.BASE_URL + "areas");
     if(!resp.ok) return;
-    let data = await resp.json();
-    
-    stationLayer.clearLayers();
-    data.forEach((stn) => {
-        L.rectangle([UTIL.xz(stn.corner1), UTIL.xz(stn.corner2)], {
-            color: UTIL.convertColor(stn.color),
-            opacity: 0.2
-        }).addTo(stationLayer)
-    
-        // Draw text
-        new L.marker(UTIL.getCenter(stn.corner1, stn.corner2), { opacity: 0 })
-        .bindTooltip(`${stn.name}`, {
-            permanent: true,
-            direction: 'center',
-            className: "stn-label"
-        })
-        .addTo(stationLayer);
-    })
+    areaData = await resp.json();
+}
+
+async function drawAreas() {
+    areaLayer.clearLayers();
+
+    if(SETTINGS.STATION_VISIBLE) {
+        areaData.station.forEach((stn) => {
+            L.rectangle([UTIL.xz(stn.corner1), UTIL.xz(stn.corner2)], {
+                color: UTIL.convertColor(stn.color),
+                opacity: 0.2
+            }).addTo(areaLayer)
+        
+            // Draw text
+            new L.marker(UTIL.getCenter(stn.corner1, stn.corner2), { opacity: 0 })
+            .bindTooltip(`${stn.name}`, {
+                permanent: true,
+                direction: 'center',
+                className: "stn-label"
+            })
+            .addTo(areaLayer);
+        });
+    }
+
+    if(SETTINGS.DEPOT_VISIBLE) {
+        areaData.depots.forEach((stn) => {
+            L.rectangle([UTIL.xz(stn.corner1), UTIL.xz(stn.corner2)], {
+                color: UTIL.convertColor(stn.color),
+                opacity: 0.2
+            }).addTo(areaLayer)
+        
+            // Draw text
+            new L.marker(UTIL.getCenter(stn.corner1, stn.corner2), { opacity: 0 })
+            .bindTooltip(`${stn.name}`, {
+                permanent: true,
+                direction: 'center',
+                className: "stn-label"
+            })
+            .addTo(areaLayer);
+        });
+    }
 }
 
 
@@ -210,8 +243,6 @@ async function teleportToSpawn() {
         map.setView(UTIL.xz(data.spawnpoint), 2);
     }
 }
-
-let appeared = new Map();
 
 function updateOccupy(cid) {
     if(occupyStream) occupyStream.close();
@@ -231,10 +262,15 @@ function updateOccupy(cid) {
     }));
 }
 
+function updateLeafletPosLabel() {
+    document.getElementById("leaflet-pos").textContent = `${Math.round(map.getCenter().lng)}, ${Math.round(map.getCenter().lat)}`
+}
+
 map.on('dragend', function() {
     updateTracks();
     updateTrains();
     updateOccupy();
+    updateLeafletPosLabel();
 });
 
 function updateTrains(cid) {
@@ -254,10 +290,12 @@ function updateTrains(cid) {
 
 (async() => {
     await teleportToSpawn();
+    await getAreas();
     updateTracks();
     updateOccupy();
-    updateStation();
+    drawAreas();
     updateTrains();
+    updateLeafletPosLabel();
 
     setInterval(renderTrains, 1000);
     setInterval(renderOccupants, 1000);

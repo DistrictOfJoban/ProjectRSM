@@ -2,6 +2,8 @@ package com.lx.rsm.servlet;
 
 import com.google.gson.JsonArray;
 import com.lx.rsm.Data.DiffManager;
+import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -17,11 +19,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 
 @WebServlet(asyncSupported = true)
 public class BaseServlet extends HttpServlet {
-    public static final HashMap<Long, DiffManager> diffManagerCache = new HashMap<>();
+    public static final Long2ObjectMap<DiffManager> diffManagerCache = new Long2ObjectArrayMap<>();
     protected static final int RADIUS_THRESHOLD = 2000;
     protected static JsonArray getXZObject(Vec3d pos) {
         final JsonArray posArray = new JsonArray();
@@ -119,7 +120,6 @@ public class BaseServlet extends HttpServlet {
         response.setContentType("text/event-stream");
         response.setCharacterEncoding("UTF-8");
         response.setStatus(HttpServletResponse.SC_OK);
-
         try {
             for(int i = 0; i < 30; i++) {
                 if(!asyncContext.getResponse().getWriter().checkError()) {
@@ -144,8 +144,6 @@ public class BaseServlet extends HttpServlet {
             }
 
             asyncContext.complete();
-        } catch(InterruptedException e) {
-            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
             asyncContext.complete();
