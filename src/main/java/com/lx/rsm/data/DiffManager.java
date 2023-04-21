@@ -1,4 +1,4 @@
-package com.lx.rsm.Data;
+package com.lx.rsm.data;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
@@ -16,7 +16,7 @@ public class DiffManager {
         return !prevData.equals(data);
     }
 
-    public boolean haveRecordAndDeleteIfAny(String uuid) {
+    public boolean deleteRecord(String uuid) {
         boolean result = previousDatas.containsKey(uuid);
         if(result) {
             previousDatas.remove(uuid);

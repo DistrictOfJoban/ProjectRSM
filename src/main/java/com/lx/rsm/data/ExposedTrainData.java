@@ -1,4 +1,4 @@
-package com.lx.rsm.Data;
+package com.lx.rsm.data;
 
 import mtr.data.TrainServer;
 import net.minecraft.inventory.SimpleInventory;

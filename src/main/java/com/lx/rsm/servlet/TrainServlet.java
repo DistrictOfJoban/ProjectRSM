@@ -2,7 +2,7 @@ package com.lx.rsm.servlet;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.lx.rsm.Data.ExposedTrainData;
+import com.lx.rsm.data.ExposedTrainData;
 import com.lx.rsm.Events;
 import com.lx.rsm.MTRDataManager;
 import com.lx.rsm.mixin.PathDataAccessorMixin;
@@ -15,7 +15,6 @@ import net.minecraft.util.math.BlockPos;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
 import java.util.List;
 
 public class TrainServlet extends BaseServlet {

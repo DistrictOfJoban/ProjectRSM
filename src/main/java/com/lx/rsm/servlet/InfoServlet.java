@@ -2,6 +2,7 @@ package com.lx.rsm.servlet;
 
 import com.google.gson.JsonObject;
 import com.lx.rsm.Events;
+import com.lx.rsm.ProjectRSM;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
@@ -15,7 +16,7 @@ public class InfoServlet extends BaseServlet {
         final JsonObject dataObject = new JsonObject();
 
         if(Events.overworldData != null) {
-            dataObject.add("spawnpoint", getPosObject(Events.spawnPoint));
+            dataObject.add("spawnpoint", getPosObject(ProjectRSM.server.getOverworld().getSpawnPos()));
         }
 
         sendResponse(response, asyncContext, dataObject.toString());

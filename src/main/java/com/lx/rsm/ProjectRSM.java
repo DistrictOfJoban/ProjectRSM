@@ -1,11 +1,12 @@
 package com.lx.rsm;
 
 
-import com.lx.rsm.Config.PortConfig;
+import com.lx.rsm.config.PortConfig;
 import com.lx.rsm.servlet.*;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.server.MinecraftServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Connector;
@@ -16,8 +17,6 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 //import org.eclipse.jetty.util.log.Log;
 //import org.eclipse.jetty.util.log.StdErrLog;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.StdErrLog;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
@@ -25,6 +24,7 @@ import java.net.URL;
 
 public class ProjectRSM implements ModInitializer {
     private Server webServer = null;
+    public static MinecraftServer server = null;
     public static final Logger LOGGER = LogManager.getLogger("RSM");
 
     @Override
@@ -34,6 +34,12 @@ public class ProjectRSM implements ModInitializer {
 
         /* EVENTS REGISTRATION */
         ServerTickEvents.START_SERVER_TICK.register(Events::onServerTick);
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            ProjectRSM.server = server;
+            LOGGER.info("[RSM] Initializing webserver");
+            initializeWebserver();
+        });
+
         ServerLifecycleEvents.SERVER_STOPPING.register((server) -> {
             if(webServer != null) {
                 try {
@@ -44,9 +50,6 @@ public class ProjectRSM implements ModInitializer {
                 }
             }
         });
-
-        LOGGER.info("[RSM] Initializing webserver");
-        initializeWebserver();
     }
 
     private void initializeWebserver() {
@@ -72,7 +75,7 @@ public class ProjectRSM implements ModInitializer {
         context.addServlet(DataServlet.class, "/data");
         context.addServlet(StationDepotServlet.class, "/areas");
         context.addServlet(TrainServlet.class, "/trains");
-        context.addServlet(OccupiedServlet.class, "/occupy");
+        context.addServlet(SignalBlocksServlet.class, "/occupy");
         context.addServlet(InfoServlet.class, "/info");
 
 //        StdErrLog logger = new StdErrLog();

@@ -1,4 +1,4 @@
-package com.lx.rsm.Config;
+package com.lx.rsm.config;
 
 import com.lx.rsm.ProjectRSM;
 import net.fabricmc.loader.api.FabricLoader;

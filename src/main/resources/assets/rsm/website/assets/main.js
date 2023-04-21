@@ -107,6 +107,7 @@ function updateTracks() {
 }
 
 function renderOccupants() {
+    console.log(knownOccupants)
     occupyLayer.clearLayers();
     for(let section of knownOccupants.values()) {
         L.polyline([UTIL.xz(section.pos1), UTIL.xz(section.pos2)], {
@@ -125,19 +126,12 @@ function renderTrains() {
     trainLayer.clearLayers();
     let outdatedTrains = [];
     knownTrains.forEach((train, uuid) => {
-        let prevPos = null;
-
         if(train.speed > 0 && Date.now() - train.lastUpdated > 1000 * 20) {
             outdatedTrains.push(uuid);
             return;
         }
         
         train.poses.forEach((pos, i) => {
-            // if(!prevPos) {
-            //     prevPos = pos;
-            //     return;
-            // }
-
             if(UTIL.manhattenDistance(center.lng, center.lat, pos[0], pos[1]) > 2000) {
                 return;
             }
@@ -155,7 +149,7 @@ function renderTrains() {
             /* Draw invisible line to give a little margin for the tooltip hover */
             L.polyline([UTIL.xz(pos[0]), UTIL.xz(pos[1])], {
                     color: "transparent",
-                    weight: SETTINGS.LINE_THICKNESS + 4,
+                    weight: SETTINGS.LINE_THICKNESS * 3,
                     lineCap: "square",
                     className: "train",
                     pane: "trains"
@@ -246,7 +240,7 @@ async function teleportToSpawn() {
 
 function updateOccupy(cid) {
     if(occupyStream) occupyStream.close();
-    occupyStream = new EventSource(UTIL.formURL("occupy", map.getCenter().lng, map.getCenter().lat, cid));
+    occupyStream = new EventSource(UTIL.formURL("occupy", map.getCenter().lng, map.getCenter().lat));
     occupyStream.onmessage = (e) => {
         if(e.data.includes("CID")) {
             let continuousId = e.data.split("CID=")[1];

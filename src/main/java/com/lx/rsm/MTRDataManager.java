@@ -1,6 +1,6 @@
 package com.lx.rsm;
 
-import com.lx.rsm.Data.ExposedTrainData;
+import com.lx.rsm.data.ExposedTrainData;
 import com.lx.rsm.mixin.SidingAccessorMixin;
 import com.lx.rsm.mixin.TrainAccessorMixin;
 import com.lx.rsm.mixin.TrainServerAccessorMixin;
