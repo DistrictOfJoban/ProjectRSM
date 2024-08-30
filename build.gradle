@@ -1,8 +1,8 @@
 import groovy.json.JsonSlurper
 plugins {
-	id 'fabric-loom' version '1.1-SNAPSHOT'
+	id 'fabric-loom' version '1.7-SNAPSHOT'
 	id 'maven-publish'
-	id "com.github.johnrengelman.shadow" version "7.1.2"
+	id "com.github.johnrengelman.shadow" version "8.1.1"
 	id "de.undercouch.download" version "4.1.2"
 }
 
@@ -11,18 +11,17 @@ targetCompatibility = JavaVersion.VERSION_16
 
 group = project.maven_group
 
-def default_minecraft_version = "1.19.2"
-def minecraft_version = project.properties.containsKey("buildVersion") ? project.getProperties().get("buildVersion") : default_minecraft_version
+def minecraft_version = "1.19.2"
 def minecraft_major_version = minecraft_version.split("\\.")[0] as int // Always return 1, unless mojang goes haywire :P
 def minecraft_main_version = minecraft_version.split("\\.")[1] as int
 def mc_requirement = "${minecraft_major_version}.${minecraft_main_version}.x"
 def minecraft_minor_version = minecraft_version.split("\\.").size() > 2 ? minecraft_version.split("\\.")[2] as int : 0
 
-def yarn_mappings = new JsonSlurper().parse(("https://meta.fabricmc.net/v2/versions/yarn/" + minecraft_version).toURL())[0]["version"]
+def yarn_mappings = project.yarn_version
 def loader_version = project.loader_version
-def fapi_version = getModrinthVersion("fabric", minecraft_version, "fabric-api")
+def fapi_version = project.fabric_version
 
-version = minecraft_version + "-" + project.mod_version
+version = project.mod_version + "+" + minecraft_version
 repositories {
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
@@ -113,7 +112,7 @@ dependencies {
 
 shadowJar {
 	configurations = [project.configurations.shadow]
-	classifier "dev-shadow"
+	archiveClassifier.set("dev-shadow")
 	relocate "javax.servlet", "mtr.libraries.javax.servlet"
 	relocate "org.eclipse", "mtr.libraries.org.eclipse"
 }
@@ -121,7 +120,6 @@ shadowJar {
 remapJar {
 	input.set shadowJar.archiveFile
 	dependsOn shadowJar
-	classifier null
 }
 
 processResources {
@@ -143,9 +141,9 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = "UTF-8"
 
 	// Minecraft 1.17 (21w19a) upwards uses Java 16.
-	def targetVersion = 16
+	def targetVersion = 17
 	if (JavaVersion.current().isJava9Compatible()) {
-		 it.options.release = targetVersion
+		it.options.release = targetVersion
 	}
 }
 
@@ -177,23 +175,23 @@ publishing {
 	}
 
 	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-		allprojects {
-			repositories {
-				maven {
-					url = "https://minecraft.guntram.de/maven/"
-				}
-				maven { url 'https://www.jitpack.io' }
-				maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+	allprojects {
+		repositories {
+			maven {
+				url = "https://minecraft.guntram.de/maven/"
 			}
+			maven { url 'https://www.jitpack.io' }
+			maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+		}
 
-			afterEvaluate {
-				for (def task in it.tasks) {
-					if (!project.file("lib/mtr-fabric.jar").exists()) {
-						task.dependsOn rootProject.tasks.setupLibrary
-					}
+		afterEvaluate {
+			for (def task in it.tasks) {
+				if (!project.file("lib/mtr-fabric.jar").exists()) {
+					task.dependsOn rootProject.tasks.setupLibrary
 				}
 			}
 		}
+	}
 }
 
 static def getModrinthVersion(loader, minecraftVersion, projectId) {
